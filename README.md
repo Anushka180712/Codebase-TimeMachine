@@ -40,7 +40,7 @@ Every codebase has a story. The first lonely commit. The week the team doubled. 
 | 🎥 **Cinema mode** | Press `C` to hide the UI for clean screen recordings, with stats drawn right onto the scene. |
 | 📸 **Screenshots & share links** | Save a PNG, or copy a link like `?repo=vuejs/core` that opens straight into that city. |
 | ⚡ **Works instantly, no token** | A built-in demo city plays with zero API calls. Real repos use the public GitHub API, and an optional token unlocks thousands of commits. |
-| 🌸 **Dreamy pastel look** | Cotton-candy dusk skies, pastel skyscrapers with glowing windows, and sparkles that burst when a new file is built or a bug fire is put out. Switch to a bright daytime sky in Settings. |
+| 💖 **Pink, light & sparkly** | A bright pink-and-white daytime city with hot pink and bubblegum skyscrapers and twinkling sparkles in the sky. Sparkles burst whenever a new file is built or a bug fire is put out. Prefer a moody look? Switch to *Dreamy night* in Settings. |
 | 📱 **Responsive** | Drag to pan, scroll or pinch to zoom, works on phones too. |
 
 ## 🚀 Quick start
@@ -100,7 +100,7 @@ Results are cached in `localStorage`, so reopening the same repo is instant. You
 
 ```
 index.html        page layout and controls
-css/style.css     pastel glass UI
+css/style.css     light pink glass UI
 js/github.js      GitHub API loader (pagination, rate limits)
 js/demo.js        seeded demo project that works offline
 js/model.js       city planner + replay engine + bug detection

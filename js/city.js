@@ -24,11 +24,12 @@ window.CTM = window.CTM || {};
     return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
   };
 
-  const SPARKLE_COLORS = ['255,255,255', '255,214,240', '214,236,255', '220,255,240', '255,248,200', '232,214,255'];
+  const SPARKLE_NIGHT = ['255,255,255', '255,214,240', '214,236,255', '220,255,240', '255,248,200', '232,214,255'];
+  const SPARKLE_DAY = ['255,46,147', '255,210,63', '200,107,255', '255,133,194', '255,180,0', '255,255,255'];
 
   const SKY = {
     night: { top: '#1f1846', mid: '#4b3f8f', bottom: '#e59ac8', ground: [62, 52, 118], road: [44, 36, 90], plotA: 0.16, light: 0.98, tree: [140, 230, 190] },
-    day: { top: '#9fd3ff', mid: '#d6ccff', bottom: '#ffd9ee', ground: [214, 206, 242], road: [184, 174, 224], plotA: 0.28, light: 1.0, tree: [120, 210, 160] },
+    day: { top: '#ffc4e1', mid: '#ffe3f1', bottom: '#fff8fc', ground: [255, 236, 246], road: [255, 196, 224], plotA: 0.28, light: 1.0, tree: [70, 205, 150] },
   };
 
   class City {
@@ -36,7 +37,7 @@ window.CTM = window.CTM || {};
       this.canvas = canvas;
       this.ctx = canvas.getContext('2d');
       this.model = null;
-      this.sky = 'night';
+      this.sky = 'day';
       this.heightMode = 'lines';
       this.cam = { x: 0, y: 0, zoom: 1 };
       this.camTarget = { x: 0, y: 0, zoom: 1 };
@@ -313,7 +314,7 @@ window.CTM = window.CTM || {};
         const id = Math.floor(Math.random() * n);
         if (this.curH[id] > 4) {
           const [x, y] = this.lotTop(id);
-          this.particles.push({ x: x + (Math.random() - 0.5) * 30, y: y - Math.random() * 30, vx: 0, vy: -6, life: 0, max: 1.4 + Math.random(), size: 4 + Math.random() * 4, kind: 'sparkle', c: SPARKLE_COLORS[Math.floor(Math.random() * SPARKLE_COLORS.length)] });
+          this.particles.push({ x: x + (Math.random() - 0.5) * 30, y: y - Math.random() * 30, vx: 0, vy: -6, life: 0, max: 1.4 + Math.random(), size: 4 + Math.random() * 4, kind: 'sparkle', c: Math.floor(Math.random() * 6) });
         }
       }
       this.updatePeople(dt);
@@ -334,7 +335,7 @@ window.CTM = window.CTM || {};
       const [x, y] = this.lotTop(id);
       for (let i = 0; i < n; i++) {
         const a = Math.random() * Math.PI * 2, sp = 20 + Math.random() * 40;
-        this.particles.push({ x, y: y - 4, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * 0.6 - 25, life: 0, max: 0.9 + Math.random() * 0.8, size: 3 + Math.random() * 4, kind: 'sparkle', c: SPARKLE_COLORS[Math.floor(Math.random() * SPARKLE_COLORS.length)] });
+        this.particles.push({ x, y: y - 4, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * 0.6 - 25, life: 0, max: 0.9 + Math.random() * 0.8, size: 3 + Math.random() * 4, kind: 'sparkle', c: Math.floor(Math.random() * 6) });
       }
     }
     sparkle(ctx, x, y, r, a, c) {
@@ -407,6 +408,18 @@ window.CTM = window.CTM || {};
       g.addColorStop(1, sky.bottom);
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, this.w, this.h);
+      if (this.sky === 'day') {
+        const sg = ctx.createRadialGradient(this.w * 0.8, this.h * 0.15, 0, this.w * 0.8, this.h * 0.15, 320);
+        sg.addColorStop(0, 'rgba(255,255,255,0.85)');
+        sg.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = sg;
+        ctx.fillRect(0, 0, this.w, this.h);
+        for (const s of this.stars) {
+          if (s.r < 0.8) continue;
+          const a = 0.35 + 0.35 * Math.sin(this.time * 1.8 + s.p);
+          this.sparkle(ctx, s.x * this.w, s.y * this.h, s.r * 3.4 * (0.6 + 0.4 * Math.sin(this.time * 2 + s.p)), a, s.p > 4 ? '255,210,63' : s.p > 2 ? '200,107,255' : '255,46,147');
+        }
+      }
       if (this.sky === 'night') {
         for (const s of this.stars) {
           const a = 0.35 + 0.35 * Math.sin(this.time * 1.5 + s.p);
@@ -473,14 +486,14 @@ window.CTM = window.CTM || {};
         const depth = 14;
         ctx.beginPath();
         ctx.moveTo(l[0], l[1]); ctx.lineTo(b[0], b[1]); ctx.lineTo(b[0], b[1] + depth); ctx.lineTo(l[0], l[1] + depth); ctx.closePath();
-        ctx.fillStyle = rgb(shade(sky.road, 0.7)); ctx.fill();
+        ctx.fillStyle = night ? rgb(shade(sky.road, 0.7)) : '#ff9fcd'; ctx.fill();
         ctx.beginPath();
         ctx.moveTo(b[0], b[1]); ctx.lineTo(r[0], r[1]); ctx.lineTo(r[0], r[1] + depth); ctx.lineTo(b[0], b[1] + depth); ctx.closePath();
-        ctx.fillStyle = rgb(shade(sky.road, 0.5)); ctx.fill();
+        ctx.fillStyle = night ? rgb(shade(sky.road, 0.5)) : '#ff6fb3'; ctx.fill();
       }
 
       // road markings between blocks
-      ctx.strokeStyle = night ? 'rgba(255,220,245,0.25)' : 'rgba(255,255,255,0.65)';
+      ctx.strokeStyle = night ? 'rgba(255,220,245,0.25)' : 'rgba(255,255,255,0.95)';
       ctx.lineWidth = 1.2 / Math.max(z, 0.5);
       ctx.setLineDash([6, 8]);
       ctx.beginPath();
@@ -524,13 +537,14 @@ window.CTM = window.CTM || {};
       }
 
       // beams (contributor -> building)
-      ctx.globalCompositeOperation = 'lighter';
+      const glowMode = night ? 'lighter' : 'source-over';
+      ctx.globalCompositeOperation = glowMode;
       for (const b of this.beams) {
         const p = this.people[b.p];
         if (!p || !p.spawned || this.curH[b.id] < 1) continue;
         const [tx, ty] = this.lotTop(b.id);
         const a = Math.max(0, 1 - b.t / 0.9);
-        const col = b.bug ? [255, 170, 200] : b.color;
+        const col = b.bug ? (night ? [255, 170, 200] : [255, 120, 40]) : b.color;
         ctx.strokeStyle = rgb(col, 0.65 * a);
         ctx.lineWidth = 2.2 / Math.max(z, 0.4);
         ctx.beginPath();
@@ -547,18 +561,19 @@ window.CTM = window.CTM || {};
       for (const p of this.particles) {
         const t = p.life / p.max;
         if (p.kind === 'smoke') {
-          ctx.fillStyle = night ? `rgba(150,150,170,${0.28 * (1 - t)})` : `rgba(90,90,100,${0.3 * (1 - t)})`;
+          ctx.fillStyle = night ? `rgba(150,150,170,${0.28 * (1 - t)})` : `rgba(200,150,185,${0.3 * (1 - t)})`;
           ctx.beginPath(); ctx.arc(p.x, p.y, p.size * (1 + t * 1.6), 0, Math.PI * 2); ctx.fill();
         } else if (p.kind === 'dust') {
           ctx.fillStyle = `rgba(190,170,140,${0.45 * (1 - t)})`;
           ctx.beginPath(); ctx.arc(p.x, p.y, p.size * (1 + t), 0, Math.PI * 2); ctx.fill();
         }
       }
-      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalCompositeOperation = glowMode;
       for (const p of this.particles) {
         const t = p.life / p.max;
         if (p.kind === 'flame') {
-          const c = t < 0.3 ? [255, 246, 200] : t < 0.6 ? [255, 190, 150] : [255, 120, 175];
+          const c = night ? (t < 0.3 ? [255, 246, 200] : t < 0.6 ? [255, 190, 150] : [255, 120, 175])
+            : (t < 0.3 ? [255, 214, 60] : t < 0.6 ? [255, 120, 40] : [255, 46, 147]);
           ctx.fillStyle = rgb(c, 0.85 * (1 - t));
           ctx.beginPath(); ctx.arc(p.x, p.y, p.size * (1 - t * 0.6), 0, Math.PI * 2); ctx.fill();
         } else if (p.kind === 'spark') {
@@ -566,7 +581,7 @@ window.CTM = window.CTM || {};
           ctx.fillRect(p.x, p.y, 2, 2);
         } else if (p.kind === 'sparkle') {
           const tw = Math.sin(t * Math.PI);
-          this.sparkle(ctx, p.x, p.y, p.size * (0.4 + tw), 0.95 * tw, p.c);
+          this.sparkle(ctx, p.x, p.y, p.size * (0.4 + tw) * (night ? 1 : 1.25), 0.95 * tw, (night ? SPARKLE_NIGHT : SPARKLE_DAY)[p.c]);
         }
       }
       // fire glow
@@ -575,8 +590,8 @@ window.CTM = window.CTM || {};
         const [x, y] = this.lotTop(id);
         const r = 46 + Math.sin(this.time * 20 + id) * 4;
         const g = ctx.createRadialGradient(x, y, 0, x, y, r);
-        g.addColorStop(0, 'rgba(255,170,190,0.55)');
-        g.addColorStop(1, 'rgba(255,140,200,0)');
+        g.addColorStop(0, night ? 'rgba(255,170,190,0.55)' : 'rgba(255,150,60,0.35)');
+        g.addColorStop(1, night ? 'rgba(255,140,200,0)' : 'rgba(255,46,147,0)');
         ctx.fillStyle = g;
         ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
       }
@@ -598,7 +613,7 @@ window.CTM = window.CTM || {};
           const ph = fs * 1.5;
           this.roundRect(ctx, x - w / 2, y - ph / 2, w, ph, ph / 2);
           ctx.fill();
-          ctx.fillStyle = d.color;
+          ctx.fillStyle = night ? d.color : rgb(shade(hexToRgb(d.color), 0.62));
           ctx.fillText(label, x, y + 0.5);
         }
       }
@@ -625,7 +640,7 @@ window.CTM = window.CTM || {};
       // vignette
       const vg = ctx.createRadialGradient(this.w / 2, this.h / 2, Math.min(this.w, this.h) * 0.35, this.w / 2, this.h / 2, Math.max(this.w, this.h) * 0.75);
       vg.addColorStop(0, 'rgba(0,0,0,0)');
-      vg.addColorStop(1, night ? 'rgba(20,12,50,0.45)' : 'rgba(120,90,180,0.12)');
+      vg.addColorStop(1, night ? 'rgba(20,12,50,0.45)' : 'rgba(255,120,190,0.12)');
       ctx.fillStyle = vg;
       ctx.fillRect(0, 0, this.w, this.h);
       if (this.hud && this.hudInfo) this.drawHud(ctx);
@@ -667,7 +682,7 @@ window.CTM = window.CTM || {};
       }
 
       // shadow
-      ctx.fillStyle = night ? 'rgba(0,0,0,0.28)' : 'rgba(0,0,40,0.14)';
+      ctx.fillStyle = night ? 'rgba(0,0,0,0.28)' : 'rgba(220,40,140,0.12)';
       const sh = Math.min(h * 0.35, 30);
       ctx.beginPath();
       ctx.moveTo(B[0], B[1]); ctx.lineTo(B[0] + sh, B[1] + sh * 0.5); ctx.lineTo(C[0] + sh, C[1] + sh * 0.5); ctx.lineTo(C[0], C[1]); ctx.closePath();
@@ -695,8 +710,8 @@ window.CTM = window.CTM || {};
         ctx.lineWidth = 2.6;
         ctx.lineCap = 'butt';
         const glow = ['rgba(255,252,235,0.95)', 'rgba(255,225,245,0.95)', 'rgba(225,245,255,0.95)'];
-        const lit = night ? glow[id % 3] : 'rgba(90,70,150,0.3)';
-        const dim = night ? 'rgba(60,45,110,0.45)' : 'rgba(255,255,255,0.45)';
+        const lit = night ? glow[id % 3] : 'rgba(255,255,255,0.92)';
+        const dim = night ? 'rgba(60,45,110,0.45)' : 'rgba(120,20,80,0.18)';
         for (let r = 0; r < rows; r++) {
           const yOff = 8 + r * 9;
           for (let face = 0; face < 2; face++) {
@@ -785,7 +800,7 @@ window.CTM = window.CTM || {};
         const y = p.y - 26 * s - bob;
         const a = Math.min(1, (3.5 - (this.time - p.lastSeen)) * 1.5);
         ctx.globalAlpha = p.alpha * a;
-        ctx.fillStyle = 'rgba(34,24,72,0.88)';
+        ctx.fillStyle = this.sky === 'night' ? 'rgba(34,24,72,0.88)' : 'rgba(255,255,255,0.95)';
         this.roundRect(ctx, p.x - w / 2, y - fs * 0.8, w, fs * 1.6, fs * 0.8);
         ctx.fill();
         ctx.fillStyle = p.colorStr;
@@ -813,24 +828,26 @@ window.CTM = window.CTM || {};
       ctx.textBaseline = 'alphabetic';
       ctx.textAlign = 'left';
 
+      const day = this.sky !== 'night';
+      const shadeRGB = day ? '255,255,255' : '26,18,60';
       const g = ctx.createLinearGradient(0, 0, 0, 150 * scale);
-      g.addColorStop(0, 'rgba(26,18,60,0.7)');
-      g.addColorStop(1, 'rgba(26,18,60,0)');
+      g.addColorStop(0, `rgba(${shadeRGB},${day ? 0.85 : 0.7})`);
+      g.addColorStop(1, `rgba(${shadeRGB},0)`);
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, W, 150 * scale);
 
-      ctx.fillStyle = 'rgba(255,214,240,0.95)';
+      ctx.fillStyle = day ? '#ff2e93' : 'rgba(255,214,240,0.95)';
       ctx.font = `600 ${14 * scale}px "JetBrains Mono", monospace`;
       ctx.fillText(info.repo, pad, pad + 12 * scale);
-      ctx.fillStyle = '#ffffff';
+      ctx.fillStyle = day ? '#4a1438' : '#ffffff';
       ctx.font = `800 ${34 * scale}px Inter, sans-serif`;
       ctx.fillText(info.date, pad, pad + 50 * scale);
 
       const stats = [
-        ['COMMITS', info.commits, '#ffb3da'],
-        ['BUILDINGS', info.files, '#a6d8ff'],
-        ['CITIZENS', info.people, '#9ef0d0'],
-        ['FIRES PUT OUT', info.bugs, '#fff2a1'],
+        ['COMMITS', info.commits, day ? '#ff2e93' : '#ffb3da'],
+        ['BUILDINGS', info.files, day ? '#c247e8' : '#a6d8ff'],
+        ['CITIZENS', info.people, day ? '#1fb886' : '#9ef0d0'],
+        ['FIRES PUT OUT', info.bugs, day ? '#ff8a00' : '#fff2a1'],
       ];
       let x = W - pad;
       ctx.textAlign = 'right';
@@ -844,7 +861,7 @@ window.CTM = window.CTM || {};
         ctx.fillStyle = c;
         ctx.font = `700 ${26 * scale}px "JetBrains Mono", monospace`;
         ctx.fillText(String(v), x, pad + 40 * scale);
-        ctx.fillStyle = 'rgba(200,210,255,0.7)';
+        ctx.fillStyle = day ? 'rgba(163,95,134,0.9)' : 'rgba(200,210,255,0.7)';
         ctx.font = `600 ${10 * scale}px Inter, sans-serif`;
         ctx.fillText(k, x, pad + 12 * scale);
         x -= colW + 28 * scale;
@@ -852,8 +869,8 @@ window.CTM = window.CTM || {};
 
       // bottom ticker
       const bg = ctx.createLinearGradient(0, H - 90 * scale, 0, H);
-      bg.addColorStop(0, 'rgba(26,18,60,0)');
-      bg.addColorStop(1, 'rgba(26,18,60,0.75)');
+      bg.addColorStop(0, `rgba(${shadeRGB},0)`);
+      bg.addColorStop(1, `rgba(${shadeRGB},${day ? 0.9 : 0.75})`);
       ctx.fillStyle = bg;
       ctx.fillRect(0, H - 90 * scale, W, 90 * scale);
       if (info.lastMsg) {
@@ -864,7 +881,7 @@ window.CTM = window.CTM || {};
         ctx.fillText(who, pad, H - pad - 4 * scale);
         const ww = ctx.measureText(who).width;
         ctx.font = `500 ${14 * scale}px Inter, sans-serif`;
-        ctx.fillStyle = info.lastBug ? '#ffb27a' : 'rgba(230,235,255,0.9)';
+        ctx.fillStyle = info.lastBug ? (day ? '#ff6a00' : '#ffb27a') : (day ? '#6b2a55' : 'rgba(230,235,255,0.9)');
         let msg = (info.lastBug ? '🔥 ' : '') + info.lastMsg;
         const maxW = W * 0.62 - ww;
         while (ctx.measureText(msg).width > maxW && msg.length > 4) msg = msg.slice(0, -2);
@@ -873,18 +890,18 @@ window.CTM = window.CTM || {};
       }
       ctx.textAlign = 'right';
       ctx.font = `700 ${13 * scale}px Inter, sans-serif`;
-      ctx.fillStyle = 'rgba(255,255,255,0.85)';
-      ctx.fillText('Codebase Time Machine', W - pad, H - pad - 4 * scale);
+      ctx.fillStyle = day ? '#ff2e93' : 'rgba(255,255,255,0.85)';
+      ctx.fillText('✨ Codebase Time Machine', W - pad, H - pad - 4 * scale);
 
       // progress line
-      ctx.fillStyle = 'rgba(255,255,255,0.12)';
-      ctx.fillRect(0, H - 3, W, 3);
+      ctx.fillStyle = day ? 'rgba(255,46,147,0.15)' : 'rgba(255,255,255,0.12)';
+      ctx.fillRect(0, H - 4, W, 4);
       const pg = ctx.createLinearGradient(0, 0, W, 0);
-      pg.addColorStop(0, '#ffb3da');
-      pg.addColorStop(0.5, '#b9a7ff');
-      pg.addColorStop(1, '#9ef0d0');
+      pg.addColorStop(0, '#ff2e93');
+      pg.addColorStop(0.5, '#ff85c2');
+      pg.addColorStop(1, '#c86bff');
       ctx.fillStyle = pg;
-      ctx.fillRect(0, H - 3, W * info.progress, 3);
+      ctx.fillRect(0, H - 4, W * info.progress, 4);
     }
   }
 
