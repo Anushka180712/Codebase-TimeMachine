@@ -9,12 +9,12 @@ window.CTM = window.CTM || {};
 CTM.BUG_RE = /\b(fix(e[sd]|ing)?|bug(s|fix)?|crash(es|ed|ing)?|hotfix|regression|broken|segfault|leak(s|ing)?|oops|panic)\b/i;
 
 CTM.PALETTE = [
-  '#8b5cf6', '#38bdf8', '#f472b6', '#34d399', '#fbbf24', '#60a5fa', '#f87171', '#a3e635',
-  '#22d3ee', '#c084fc', '#fb923c', '#4ade80', '#e879f9', '#2dd4bf', '#facc15', '#818cf8',
+  '#ff9fcf', '#a996ff', '#86ebc4', '#8fcbff', '#ffe98a', '#f0a3ff', '#9ff0ff', '#c6f59a',
+  '#ffb8dc', '#b8b0ff', '#8ff7d6', '#ffc4ee', '#a9dcff', '#ddb3ff', '#fff3a8', '#a8f5c0',
 ];
 CTM.PEOPLE_COLORS = [
-  '#ffd166', '#06d6a0', '#ef476f', '#4cc9f0', '#f8961e', '#b5179e', '#90be6d', '#f72585',
-  '#4895ef', '#ffb4a2', '#80ffdb', '#e9c46a', '#c77dff', '#ff9e00', '#72efdd', '#ff5d8f',
+  '#ff8fcf', '#7fe3c4', '#9b8cff', '#7cc8ff', '#ffe066', '#f29cff', '#6ee7f2', '#b6f27a',
+  '#ffa8d8', '#8fb5ff', '#c59bff', '#5fe0b0', '#ff9fb8', '#9ad0ff', '#e7a6ff', '#a2f0a0',
 ];
 
 CTM.districtOf = function districtOf(path) {

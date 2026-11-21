@@ -301,10 +301,10 @@
     const bw = w / buckets;
     for (let b = 0; b < buckets; b++) {
       const bh = (act[b] / maxA) * (h - 4);
-      c.fillStyle = 'rgba(140,150,255,0.35)';
+      c.fillStyle = 'rgba(185,167,255,0.45)';
       c.fillRect(b * bw + 0.5, h - bh, Math.max(1, bw - 1), bh);
       if (bugs[b]) {
-        c.fillStyle = 'rgba(255,122,26,0.9)';
+        c.fillStyle = 'rgba(255,170,215,0.95)';
         c.fillRect(b * bw + 0.5, 0, Math.max(1.5, bw - 1), 4);
       }
     }
@@ -320,8 +320,8 @@
     c.drawImage(tlBase, 0, 0);
     const p = m.steps.length > 1 ? Math.max(0, m.state.index) / (m.steps.length - 1) : 1;
     const g = c.createLinearGradient(0, 0, tl.width, 0);
-    g.addColorStop(0, 'rgba(124,92,255,0.35)');
-    g.addColorStop(1, 'rgba(56,189,248,0.35)');
+    g.addColorStop(0, 'rgba(255,179,218,0.4)');
+    g.addColorStop(1, 'rgba(158,240,208,0.4)');
     c.fillStyle = g;
     c.fillRect(0, 0, tl.width * p, tl.height);
   }

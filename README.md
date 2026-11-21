@@ -31,7 +31,7 @@ Every codebase has a story. The first lonely commit. The week the team doubled. 
 |---|---|
 | 🏗️ **Files become buildings** | Every file gets its own lot. Height grows with lines of code (or switch to *churn* to see the most edited files tower over the rest). |
 | 🗺️ **Folders become districts** | Top-level folders (and `packages/*`, `src/*`, `apps/*` in monorepos) become colour-coded neighbourhoods with roads in between. |
-| 🔥 **Bug fixes start fires** | Commits mentioning `fix`, `bug`, `crash`, `hotfix`, `regression`, `leak` and friends set the touched buildings ablaze, then the smoke clears. |
+| 🔥 **Bug fixes start fires** | Commits mentioning `fix`, `bug`, `crash`, `hotfix`, `regression`, `leak` and friends set the touched buildings ablaze. When the fire is out, the building sparkles. |
 | 🚶 **Contributors walk the streets** | Each author is a little citizen who walks to the building they just changed, with a light beam marking the commit. |
 | ⏯️ **Full playback control** | Play, pause, restart, step commit by commit, scrub a timeline that shows activity and bug hotspots, and pick ½× to 8× speed. |
 | 📊 **Live stats** | Date, commits, buildings, citizens, fires put out, estimated lines of code, a contributor leaderboard and the biggest districts, all updating in real time. |
@@ -40,7 +40,7 @@ Every codebase has a story. The first lonely commit. The week the team doubled. 
 | 🎥 **Cinema mode** | Press `C` to hide the UI for clean screen recordings, with stats drawn right onto the scene. |
 | 📸 **Screenshots & share links** | Save a PNG, or copy a link like `?repo=vuejs/core` that opens straight into that city. |
 | ⚡ **Works instantly, no token** | A built-in demo city plays with zero API calls. Real repos use the public GitHub API, and an optional token unlocks thousands of commits. |
-| 🌙 **Night & day skies** | Glowing windows, blinking antenna lights and a starry sky, or a bright daytime look. |
+| 🌸 **Dreamy pastel look** | Cotton-candy dusk skies, pastel skyscrapers with glowing windows, and sparkles that burst when a new file is built or a bug fire is put out. Switch to a bright daytime sky in Settings. |
 | 📱 **Responsive** | Drag to pan, scroll or pinch to zoom, works on phones too. |
 
 ## 🚀 Quick start
@@ -100,7 +100,7 @@ Results are cached in `localStorage`, so reopening the same repo is instant. You
 
 ```
 index.html        page layout and controls
-css/style.css     glassy dark UI
+css/style.css     pastel glass UI
 js/github.js      GitHub API loader (pagination, rate limits)
 js/demo.js        seeded demo project that works offline
 js/model.js       city planner + replay engine + bug detection
