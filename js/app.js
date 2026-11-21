@@ -640,10 +640,59 @@
   /* ------------------------------------------------------------ controls */
   $('#repoForm').addEventListener('submit', (e) => {
     e.preventDefault();
-    loadRepo($('#repoInput').value);
+    const v = $('#repoInput').value;
+    if (!CTM.GitHub.parseRepo(v) && CTM.Profile.parseUser(v)) loadProfile(v);
+    else loadRepo(v);
   });
+
+  /* ------------------------------------------------------------ profile mode */
+  const profileEl = $('#profile');
+  async function loadProfile(input, { fromUrl = false } = {}) {
+    const login = CTM.Profile.parseUser(input);
+    if (!login) { toast('That does not look like a GitHub username.', true); return; }
+    $('#repoInput').value = login;
+    if (app.abort) app.abort.abort();
+    const ctrl = new AbortController();
+    app.abort = ctrl;
+    showLoader(true, `Opening @${login}'s profile…`);
+    $('#loaderBar').style.width = '40%';
+    try {
+      const d = await CTM.Profile.load(login, settings.token, ctrl.signal);
+      showLoader(false);
+      const card = $('#profileCard');
+      card.innerHTML = CTM.Profile.render(d);
+      profileEl.hidden = false;
+      card.scrollTop = 0;
+      CTM.Profile.animateCounts(card);
+      const u = new URL(location.href);
+      u.search = '';
+      u.searchParams.set('user', d.login);
+      history.replaceState(null, '', u.toString());
+    } catch (e) {
+      showLoader(false);
+      if (e.name !== 'AbortError') {
+        toast(e.message || 'Could not load that profile.', true, 7000);
+        if (e.status === 403 || e.status === 429) setTimeout(openSettings, 600);
+      }
+      if (fromUrl && !app.model) loadDemo();
+    } finally {
+      if (app.abort === ctrl) app.abort = null;
+    }
+  }
+  function closeProfile() {
+    profileEl.hidden = true;
+    if (app.model && app.model.source === 'github') updateShareUrl(app.model.repo, settings.mode, settings.limit || defaultLimit());
+    else history.replaceState(null, '', location.pathname);
+  }
+  profileEl.addEventListener('click', (e) => {
+    const repoBtn = e.target.closest('[data-repo]');
+    if (repoBtn) { profileEl.hidden = true; loadRepo(repoBtn.dataset.repo); return; }
+    if (e.target === profileEl || e.target.closest('[data-close]')) closeProfile();
+  });
+  window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !profileEl.hidden) closeProfile(); });
   document.querySelectorAll('.chip').forEach((b) => b.addEventListener('click', () => {
     if (b.dataset.demo) loadDemo();
+    else if (b.dataset.user) loadProfile(b.dataset.user);
     else loadRepo(b.dataset.repo);
   }));
   $('#cancelLoad').addEventListener('click', () => { if (app.abort) app.abort.abort(); });
@@ -768,7 +817,10 @@
   if (params.get('mode')) settings.mode = params.get('mode') === 'latest' ? 'latest' : 'first';
   if (params.get('n')) settings.limit = Math.max(5, Math.min(3000, Number(params.get('n')) || 50));
   if (params.get('repo')) loadRepo(params.get('repo'), { fromUrl: true });
-  else loadDemo(true);
+  else {
+    loadDemo(true);
+    if (params.get('user')) { const u = params.get('user'); setTimeout(() => loadProfile(u, { fromUrl: true }), 50); }
+  }
 
   // expose for debugging in the console
   window.CTMApp = { app, city, loadRepo, loadDemo, seekTo, updateUI };

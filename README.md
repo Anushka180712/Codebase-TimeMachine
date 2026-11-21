@@ -31,6 +31,10 @@ Every codebase has a story. The first lonely commit. The week the team doubled. 
 
 <sub>Every year ends with a pink, Wrapped-style recap card.</sub>
 
+![Developer profile card shown when you search for a username](docs/profile.png)
+
+<sub>Search a username to get a developer card (example data shown).</sub>
+
 </div>
 
 ## ✨ Features
@@ -41,6 +45,7 @@ Every codebase has a story. The first lonely commit. The week the team doubled. 
 | 🗺️ **Folders become districts** | Top-level folders (and `packages/*`, `src/*`, `apps/*` in monorepos) become colour-coded neighbourhoods with roads in between. |
 | 🔥 **Bug fixes start fires** | Commits mentioning `fix`, `bug`, `crash`, `hotfix`, `regression`, `leak` and friends set the touched buildings ablaze. When the fire is out, the building sparkles. |
 | 🚶 **Contributors walk the streets** | Each author is a little citizen who walks to the building they just changed, with a light beam marking the commit. |
+| 👤 **Search by username** | Type just a username (like `gaearon` or `@sindresorhus`) to open a pink developer card. It shows the avatar, followers, total stars and forks, top languages, repos created per year, the last 14 days of activity, recent events and fun badges like *Superstar* or *Polyglot*. Tap any of their top repos to build its city. |
 | 🗓️ **Months & years** | A *Time machine* panel shows commits this month and this year, a pink commits-per-month chart that fills in as the year goes on, and clickable year pills that jump straight to any year. |
 | 💝 **Year in Review** | Every time the city rolls into a new year, playback pauses for a Wrapped-style pink recap: commits, new buildings, citizens, fires put out, a month-by-month chart, the top citizen, the busiest month and the fastest-growing district. |
 | 🎂 **Repo birthdays** | On every anniversary of the first commit, the city throws a party with a birthday banner and a confetti burst. |
@@ -49,7 +54,7 @@ Every codebase has a story. The first lonely commit. The week the team doubled. 
 | 📰 **Live commit feed** | Scrolling feed of commit messages with links back to GitHub. |
 | 🎬 **One-click video recording** | Hit **Record** and the app replays the whole history and downloads an MP4/WebM, with a cinematic overlay baked in. Ready to post. |
 | 🎥 **Cinema mode** | Press `C` to hide the UI for clean screen recordings, with stats drawn right onto the scene. |
-| 📸 **Screenshots & share links** | Save a PNG, or copy a link like `?repo=vuejs/core` that opens straight into that city. |
+| 📸 **Screenshots & share links** | Save a PNG, or copy a link like `?repo=vuejs/core` (or `?user=gaearon` for a profile) that opens straight into it. |
 | ⚡ **Works instantly, no token** | A built-in demo city plays with zero API calls. Real repos use the public GitHub API, and an optional token unlocks thousands of commits. |
 | 💖 **Pink, light & sparkly** | A bright pink-and-white daytime city with hot pink and bubblegum skyscrapers and twinkling sparkles in the sky. Sparkles burst whenever a new file is built or a bug fire is put out. Prefer a moody look? Switch to *Dreamy night* in Settings. |
 | 📱 **Responsive** | Drag to pan, scroll or pinch to zoom, works on phones too. |
@@ -58,7 +63,7 @@ Every codebase has a story. The first lonely commit. The week the team doubled. 
 
 ### Use it online
 
-Open the **[live demo](https://anushka180712.github.io/Codebase-TimeMachine/)**, type a repo (for example `facebook/react`) and click **Build city**.
+Open the **[live demo](https://anushka180712.github.io/Codebase-TimeMachine/)**, type a repo (for example `facebook/react`) and click **Build city**. Or type just a username (for example `gaearon`) to see that developer's profile card.
 
 ### Run it locally
 
@@ -114,6 +119,7 @@ index.html        page layout and controls
 css/style.css     light pink glass UI
 js/github.js      GitHub API loader (pagination, rate limits)
 js/demo.js        seeded demo project that works offline
+js/profile.js     username search and developer profile card
 js/model.js       city planner + replay engine + bug detection
 js/city.js        isometric canvas renderer, particles, people, camera
 js/app.js         playback loop, UI panels, recording, sharing

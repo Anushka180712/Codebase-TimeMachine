@@ -179,5 +179,5 @@ CTM.GitHub = (() => {
     };
   }
 
-  return { load, parseRepo, rateLimit, GitHubError };
+  return { load, parseRepo, rateLimit, request, GitHubError };
 })();

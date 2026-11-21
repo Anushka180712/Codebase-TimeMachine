@@ -31,7 +31,7 @@
       <span class="gh-icon" aria-hidden="true">
         <svg viewBox="0 0 16 16" width="16" height="16"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
       </span>
-      <input id="repoInput" type="text" placeholder="owner/repo or GitHub URL, e.g. facebook/react" spellcheck="false" />
+      <input id="repoInput" type="text" placeholder="owner/repo or a username, e.g. facebook/react or gaearon" spellcheck="false" />
       <button type="submit" class="btn primary">Build city</button>
       <button type="button" id="settingsBtn" class="btn icon" title="Settings (token, commit range)" aria-label="Settings">
         <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M19.14 12.94a7.07 7.07 0 000-1.88l2.03-1.58a.5.5 0 00.12-.64l-1.92-3.32a.5.5 0 00-.6-.22l-2.39.96a7.03 7.03 0 00-1.62-.94l-.36-2.54A.5.5 0 0013.9 2h-3.8a.5.5 0 00-.5.42l-.36 2.54c-.59.24-1.13.55-1.62.94l-2.39-.96a.5.5 0 00-.6.22L2.71 8.48a.5.5 0 00.12.64l2.03 1.58a7.07 7.07 0 000 1.88l-2.03 1.58a.5.5 0 00-.12.64l1.92 3.32c.13.22.39.3.6.22l2.39-.96c.49.39 1.03.7 1.62.94l.36 2.54c.05.24.25.42.5.42h3.8c.25 0 .45-.18.5-.42l.36-2.54c.59-.24 1.13-.55 1.62-.94l2.39.96c.22.08.47 0 .6-.22l1.92-3.32a.5.5 0 00-.12-.64l-2.03-1.58zM12 15.5A3.5 3.5 0 1112 8.5a3.5 3.5 0 010 7z"/></svg>
@@ -45,6 +45,8 @@
       <button class="chip" data-repo="torvalds/linux">Linux</button>
       <button class="chip" data-repo="vuejs/core">Vue</button>
       <button class="chip" data-repo="denoland/deno">Deno</button>
+      <button class="chip user" data-user="gaearon">💖 gaearon</button>
+      <button class="chip user" data-user="sindresorhus">💖 sindresorhus</button>
     </div>
   </header>
 
@@ -196,12 +198,18 @@
     </form>
   </dialog>
 
+  <!-- Profile view (username search) -->
+  <div id="profile" class="profile" hidden>
+    <div class="profile-card" id="profileCard" role="dialog" aria-modal="true" aria-label="GitHub profile"></div>
+  </div>
+
   <div id="toast" class="toast" hidden></div>
 
   <div class="kbd-hint ui">Space play · ← → step · drag to pan · scroll to zoom · C cinema</div>
 
   <script src="js/demo.js"></script>
   <script src="js/github.js"></script>
+  <script src="js/profile.js"></script>
   <script src="js/model.js"></script>
   <script src="js/city.js"></script>
   <script src="js/app.js"></script>
