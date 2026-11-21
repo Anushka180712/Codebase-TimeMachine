@@ -49,6 +49,8 @@ window.CTM = window.CTM || {};
       this.particles = [];
       this.beams = [];
       this.people = [];
+      this.cards = [];
+      this.confetti = [];
       this.time = 0;
       this.stars = Array.from({ length: 160 }, (_, i) => ({ x: hash(i, 1, 7), y: hash(i, 2, 7) * 0.7, r: 0.4 + hash(i, 3, 7) * 1.3, p: hash(i, 4, 7) * 6.28 }));
       this.resize();
@@ -317,6 +319,7 @@ window.CTM = window.CTM || {};
           this.particles.push({ x: x + (Math.random() - 0.5) * 30, y: y - Math.random() * 30, vx: 0, vy: -6, life: 0, max: 1.4 + Math.random(), size: 4 + Math.random() * 4, kind: 'sparkle', c: Math.floor(Math.random() * 6) });
         }
       }
+      this.updateCards(dt);
       this.updatePeople(dt);
       this.updateParticles(dt);
       this.draw();
@@ -644,6 +647,8 @@ window.CTM = window.CTM || {};
       ctx.fillStyle = vg;
       ctx.fillRect(0, 0, this.w, this.h);
       if (this.hud && this.hudInfo) this.drawHud(ctx);
+      this.drawConfetti(ctx);
+      if (this.cards.length) this.drawCard(ctx, this.cards[0]);
     }
 
     drawTree(ctx, gx, gy, col, seed) {
@@ -807,6 +812,197 @@ window.CTM = window.CTM || {};
         ctx.fillText(label, p.x, y + 0.5);
       }
       ctx.globalAlpha = 1;
+    }
+
+    /* ---------------- celebration cards ---------------- */
+    showCard(card) {
+      card.t = 0;
+      card.started = false;
+      this.cards.push(card);
+    }
+    clearCards() {
+      this.cards = [];
+      this.confetti = [];
+    }
+    burstConfetti(n) {
+      const cols = ['#ff2e93', '#ff85c2', '#c86bff', '#ffd23f', '#ffffff', '#7fd0ff', '#ffb3d9'];
+      for (let i = 0; i < n; i++) {
+        this.confetti.push({
+          x: this.w / 2 + (Math.random() - 0.5) * this.w * 0.5, y: this.h * 0.42 + (Math.random() - 0.5) * 60,
+          vx: (Math.random() - 0.5) * 700, vy: -250 - Math.random() * 450,
+          rot: Math.random() * 6.28, vr: (Math.random() - 0.5) * 12,
+          w: 5 + Math.random() * 6, h: 8 + Math.random() * 8,
+          c: cols[i % cols.length], life: 0, max: 2.4 + Math.random() * 1.2, star: Math.random() < 0.3,
+        });
+      }
+    }
+    updateCards(dt) {
+      if (this.cards.length) {
+        const c = this.cards[0];
+        if (!c.started) { c.started = true; this.burstConfetti(c.type === 'year' ? 140 : 90); }
+        c.t += dt;
+        if (c.t >= c.dur) this.cards.shift();
+      }
+      let w = 0;
+      for (const p of this.confetti) {
+        p.life += dt;
+        if (p.life >= p.max) continue;
+        p.vy += 700 * dt;
+        p.vx *= 1 - dt * 1.5;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.rot += p.vr * dt;
+        this.confetti[w++] = p;
+      }
+      this.confetti.length = w;
+    }
+    drawConfetti(ctx) {
+      for (const p of this.confetti) {
+        const a = Math.min(1, (p.max - p.life) * 2);
+        ctx.save();
+        ctx.globalAlpha = a;
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        if (p.star) {
+          const c = hexToRgb(p.c);
+          this.sparkle(ctx, 0, 0, p.h * 0.8, a, `${c[0]},${c[1]},${c[2]}`);
+        } else {
+          ctx.fillStyle = p.c;
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h * Math.abs(Math.cos(p.rot * 1.7)) + 1);
+        }
+        ctx.restore();
+      }
+    }
+    drawCard(ctx, c) {
+      const W = this.w, H = this.h;
+      const t = c.t;
+      const easeOutBack = (x) => { const k = 1.70158; return 1 + (k + 1) * Math.pow(x - 1, 3) + k * Math.pow(x - 1, 2); };
+      const appear = easeOutBack(Math.min(1, t / 0.5));
+      const fade = Math.max(0, Math.min(1, t / 0.2, (c.dur - t) / 0.45));
+      ctx.save();
+      if (c.type === 'birthday') {
+        const s = Math.max(0.8, Math.min(1.3, W / 1100));
+        ctx.font = `800 ${20 * s}px Inter, sans-serif`;
+        const tw = Math.max(ctx.measureText('🎂 ' + c.label + ' 🎉').width, 200) + 60 * s;
+        const ph = 74 * s;
+        const y = H * 0.2;
+        ctx.globalAlpha = fade;
+        ctx.translate(W / 2, y);
+        ctx.scale(appear, appear);
+        ctx.shadowColor = 'rgba(255,46,147,0.35)';
+        ctx.shadowBlur = 30;
+        ctx.fillStyle = '#ffffff';
+        this.roundRect(ctx, -tw / 2, -ph / 2, tw, ph, ph / 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.lineWidth = 3;
+        const gb = ctx.createLinearGradient(-tw / 2, 0, tw / 2, 0);
+        gb.addColorStop(0, '#ff2e93'); gb.addColorStop(1, '#c86bff');
+        ctx.strokeStyle = gb;
+        ctx.stroke();
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#ff2e93';
+        ctx.fillText('🎂 ' + c.label + ' 🎉', 0, -10 * s);
+        ctx.font = `600 ${12 * s}px Inter, sans-serif`;
+        ctx.fillStyle = '#a35f86';
+        ctx.fillText(c.sub, 0, 16 * s);
+        ctx.restore();
+        return;
+      }
+
+      // ---- Year in Review card ----
+      ctx.fillStyle = `rgba(255,240,248,${0.45 * fade})`;
+      ctx.fillRect(0, 0, W, H);
+      const s = Math.max(0.62, Math.min(1.15, Math.min(W / 640, H / 560)));
+      const cw = 440 * s, ch = 430 * s;
+      ctx.globalAlpha = fade;
+      ctx.translate(W / 2, H / 2);
+      ctx.scale(appear, appear);
+      ctx.rotate(Math.sin(t * 1.4) * 0.006);
+      ctx.shadowColor = 'rgba(255,46,147,0.45)';
+      ctx.shadowBlur = 50;
+      const g = ctx.createLinearGradient(-cw / 2, -ch / 2, cw / 2, ch / 2);
+      g.addColorStop(0, '#ff7cc0');
+      g.addColorStop(0.5, '#ff2e93');
+      g.addColorStop(1, '#c86bff');
+      ctx.fillStyle = g;
+      this.roundRect(ctx, -cw / 2, -ch / 2, cw, ch, 28 * s);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      // glossy highlight
+      const gl = ctx.createLinearGradient(0, -ch / 2, 0, 0);
+      gl.addColorStop(0, 'rgba(255,255,255,0.28)');
+      gl.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = gl;
+      this.roundRect(ctx, -cw / 2 + 6 * s, -ch / 2 + 6 * s, cw - 12 * s, ch / 2, 24 * s);
+      ctx.fill();
+      // twinkles on the card
+      for (let k = 0; k < 7; k++) {
+        const sx = (hash(k, c.year, 3) - 0.5) * cw * 0.9, sy = (hash(k, c.year, 4) - 0.5) * ch * 0.9;
+        this.sparkle(ctx, sx, sy, (4 + 5 * hash(k, 1, 5)) * s * (0.6 + 0.4 * Math.sin(t * 4 + k)), 0.8, '255,255,255');
+      }
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
+      let y = -ch / 2 + 44 * s;
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.font = `800 ${12 * s}px Inter, sans-serif`;
+      ctx.fillText(c.partial ? '✨  YEAR IN REVIEW · SO FAR  ✨' : '✨  YEAR IN REVIEW  ✨', 0, y);
+      y += 66 * s;
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `900 ${68 * s}px Inter, sans-serif`;
+      ctx.fillText(String(c.year), 0, y);
+      y += 26 * s;
+      ctx.font = `600 ${13 * s}px "JetBrains Mono", monospace`;
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.fillText(c.repo, 0, y);
+
+      // 4 stat tiles
+      const tiles = [['commits', c.commits], ['new buildings', c.added], ['citizens', c.people], ['fires put out', c.bugs]];
+      const tw = (cw - 60 * s) / 4, th = 62 * s;
+      y += 18 * s;
+      tiles.forEach(([k, v], idx) => {
+        const x = -cw / 2 + 24 * s + idx * (tw + 4 * s);
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        this.roundRect(ctx, x, y, tw, th, 14 * s);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `800 ${22 * s}px "JetBrains Mono", monospace`;
+        // count up while the card opens
+        const shown = Math.round(v * Math.min(1, t / 1.1));
+        ctx.fillText(shown.toLocaleString(), x + tw / 2, y + 32 * s);
+        ctx.font = `600 ${10 * s}px Inter, sans-serif`;
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.fillText(k, x + tw / 2, y + 50 * s);
+      });
+      y += th + 18 * s;
+
+      // month bars
+      const bw = (cw - 60 * s) / 12, bh = 58 * s;
+      const max = Math.max(1, ...c.months);
+      const grow = Math.min(1, Math.max(0, (t - 0.3) / 0.9));
+      c.months.forEach((n, k) => {
+        const x = -cw / 2 + 30 * s + k * bw;
+        const h = Math.max(2, (n / max) * bh * grow);
+        const isBusy = n === max && n > 0;
+        ctx.fillStyle = isBusy ? '#ffffff' : 'rgba(255,255,255,0.45)';
+        this.roundRect(ctx, x + 2 * s, y + bh - h, bw - 4 * s, h, Math.min(5 * s, h / 2));
+        ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.font = `700 ${9 * s}px Inter, sans-serif`;
+        ctx.fillText('JFMAMJJASOND'[k], x + bw / 2, y + bh + 13 * s);
+      });
+      y += bh + 38 * s;
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `700 ${14 * s}px Inter, sans-serif`;
+      ctx.fillText(`💖 Top citizen: ${c.top} (${c.topN} commits)`, 0, y);
+      y += 22 * s;
+      ctx.font = `600 ${13 * s}px Inter, sans-serif`;
+      ctx.fillStyle = 'rgba(255,255,255,0.92)';
+      ctx.fillText(`📅 Busiest month: ${c.busiest} · ${c.busiestN} commits`, 0, y);
+      y += 20 * s;
+      ctx.fillText(`🏙️ Fastest-growing district: ${c.district}`, 0, y);
+      ctx.restore();
     }
 
     roundRect(ctx, x, y, w, h, r) {

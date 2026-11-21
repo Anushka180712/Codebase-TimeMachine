@@ -29,7 +29,79 @@
     recorder: null,
     endHold: 0,
     abort: null,
+    years: null,
+    holdUntil: 0,
   };
+  const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const MONTHS_LONG = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const ordinal = (n) => n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th');
+
+  /** Per-year summaries: commits, months, new buildings, fires, people. */
+  function summarizeYears(m) {
+    const years = new Map();
+    m.steps.forEach((s, i) => {
+      const d = new Date(s.date);
+      const y = d.getFullYear();
+      if (!years.has(y)) years.set(y, { year: y, first: i, last: i, commits: 0, months: new Array(12).fill(0), added: 0, bugs: 0, authors: new Map(), districts: new Map() });
+      const Y = years.get(y);
+      Y.last = i;
+      Y.commits++;
+      Y.months[d.getMonth()]++;
+      if (s.bug) Y.bugs++;
+      Y.authors.set(s.author, (Y.authors.get(s.author) || 0) + 1);
+      for (const op of s.ops) if (op.t === 'a') {
+        Y.added++;
+        const di = m.lots[op.id].district;
+        Y.districts.set(di, (Y.districts.get(di) || 0) + 1);
+      }
+    });
+    return years;
+  }
+
+  function yearCard(y, partial) {
+    const m = app.model;
+    const Y = app.years && app.years.get(y);
+    if (!Y) return null;
+    let topA = -1, topN = 0;
+    Y.authors.forEach((n, a) => { if (n > topN) { topN = n; topA = a; } });
+    let busy = 0;
+    Y.months.forEach((n, k) => { if (n > Y.months[busy]) busy = k; });
+    let topD = -1, topDN = 0;
+    Y.districts.forEach((n, d) => { if (n > topDN) { topDN = n; topD = d; } });
+    return {
+      type: 'year', dur: 4.6, year: y, partial, repo: m.title,
+      commits: Y.commits, added: Y.added, bugs: Y.bugs, people: Y.authors.size,
+      months: Y.months.slice(), busiest: MONTHS_LONG[busy], busiestN: Y.months[busy],
+      top: topA >= 0 ? m.authors[topA].name : '—', topN,
+      district: topD >= 0 ? m.districts[topD].name : '—',
+    };
+  }
+
+  function fullYears(a, b) {
+    const d1 = new Date(a), d2 = new Date(b);
+    let y = d2.getFullYear() - d1.getFullYear();
+    if (d2.getMonth() < d1.getMonth() || (d2.getMonth() === d1.getMonth() && d2.getDate() < d1.getDate())) y--;
+    return y;
+  }
+
+  /** Called after each played commit: year-end recap and repo birthdays. Returns true to pause the batch. */
+  function checkMilestones(res) {
+    const m = app.model;
+    const i = res.index;
+    if (i === 0) return false;
+    const prev = m.steps[i - 1], cur = m.steps[i];
+    let pause = false;
+    const py = new Date(prev.date).getFullYear(), cy = new Date(cur.date).getFullYear();
+    if (cy !== py) {
+      const card = yearCard(py, false);
+      if (card) { city.showCard(card); app.holdUntil = performance.now() + card.dur * 1000; pause = true; }
+    }
+    const age = fullYears(m.steps[0].date, cur.date);
+    if (age >= 1 && age > fullYears(m.steps[0].date, prev.date)) {
+      city.showCard({ type: 'birthday', dur: 3.4, age, label: `Happy ${ordinal(age)} birthday, ${m.title.replace(/ \(demo city\)$/, '')}!`, sub: `${age} year${age > 1 ? 's' : ''} since the very first commit` });
+    }
+    return pause;
+  }
 
   city.sky = settings.sky;
   city.heightMode = settings.height;
@@ -82,6 +154,9 @@
     model.seek(-1);
     city.syncToState();
     app.baseRate = Math.max(1.5, Math.min(25, model.steps.length / 45));
+    app.years = summarizeYears(model);
+    app.holdUntil = 0;
+    city.clearCards();
     app.acc = 0;
     $('#scrubber').max = String(model.steps.length - 1);
     $('#scrubber').value = '0';
@@ -180,6 +255,8 @@
 
   function seekTo(i) {
     if (!app.model) return;
+    app.holdUntil = 0;
+    city.clearCards();
     app.model.seek(i);
     city.syncToState();
     app.acc = 0;
@@ -248,8 +325,53 @@
       lastBug: last ? last.bug : false,
       progress: m.steps.length > 1 ? Math.max(0, i) / (m.steps.length - 1) : 1,
     };
+    updateTime(s, i);
     drawTimelineProgress();
   }
+
+  let lastTimeKey = '';
+  function updateTime(s, i) {
+    const m = app.model;
+    if (!app.years) return;
+    const d = new Date(s.date);
+    const y = d.getFullYear(), mo = d.getMonth();
+    // commits so far this year, per month
+    const months = new Array(12).fill(0);
+    if (i >= 0) {
+      for (let k = i; k >= 0; k--) {
+        const dk = new Date(m.steps[k].date);
+        if (dk.getFullYear() !== y) break;
+        months[dk.getMonth()]++;
+      }
+    }
+    $('#sMonth').textContent = fmtNum(i < 0 ? 0 : months[mo]);
+    $('#sYear').textContent = fmtNum(months.reduce((a, b) => a + b, 0));
+    $('#sMonthName').textContent = i < 0 ? '—' : `${MONTHS_LONG[mo]} ${y}`;
+    $('#sYearName').textContent = i < 0 ? '—' : `${y} so far`;
+    $('#tmYear').textContent = i < 0 ? '' : String(y);
+    const full = app.years.get(y);
+    const max = Math.max(1, ...(full ? full.months : months));
+    const key = `${y}:${i}`;
+    if (key === lastTimeKey) return;
+    lastTimeKey = key;
+    $('#monthBars').innerHTML = months.map((n, k) => {
+      const cls = i < 0 ? 'future' : k === mo ? 'now' : k > mo ? 'future' : '';
+      const h = Math.max(3, (n / max) * 54);
+      return `<div class="m ${cls}" title="${MONTHS_LONG[k]} ${y}: ${n} commits"><i style="height:${cls === 'future' ? 3 : h}px"></i><b>${MONTHS[k][0]}</b>${k === mo && n && i >= 0 ? `<em style="bottom:${h + 16}px;top:auto">${n}</em>` : ''}</div>`;
+    }).join('');
+    const ys = [...app.years.values()];
+    $('#yearPills').innerHTML = ys.map((Y) => {
+      const sofar = Y.year < y ? Y.commits : Y.year === y ? months.reduce((a, b) => a + b, 0) : 0;
+      const cls = Y.year === y && i >= 0 ? 'now' : Y.year > y || i < 0 ? 'future' : '';
+      return `<button class="${cls}" data-year="${Y.year}" title="Jump to ${Y.year}">${Y.year}<span>${fmtNum(cls === 'future' ? Y.commits : sofar)}</span></button>`;
+    }).join('');
+  }
+  $('#yearPills').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-year]');
+    if (!b || !app.years) return;
+    const Y = app.years.get(Number(b.dataset.year));
+    if (Y) { seekTo(Y.first); toast(`🗓️ Jumped to ${Y.year}: ${fmtNum(Y.commits)} commits that year.`, false, 2500); }
+  });
 
   function feedItem(s, index) {
     const m = app.model;
@@ -332,7 +454,7 @@
     const dt = Math.min(0.05, (t - lastT) / 1000);
     lastT = t;
     const m = app.model;
-    if (m && app.playing) {
+    if (m && app.playing && performance.now() >= app.holdUntil) {
       app.acc += dt * app.baseRate * app.speed;
       const n = Math.floor(app.acc);
       if (n > 0) {
@@ -340,13 +462,17 @@
         for (let k = 0; k < n; k++) {
           const res = stepOnce(k >= n - 3);
           if (!res) break;
+          if (checkMilestones(res)) { app.acc = 0; break; }
         }
         updateUI(false);
       }
       if (m.state.index >= m.steps.length - 1) {
         setPlaying(false);
         updateUI(true);
-        if (app.recorder) app.endHold = performance.now() + 2500;
+        const lastY = new Date(m.steps[m.steps.length - 1].date).getFullYear();
+        const card = yearCard(lastY, true);
+        if (card) city.showCard(card);
+        if (app.recorder) app.endHold = performance.now() + (card ? card.dur * 1000 + 600 : 2500);
         else celebrate();
       }
     }

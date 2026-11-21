@@ -62,6 +62,13 @@
       <div class="stat fire"><span class="k">Fires put out</span><span class="v" id="sBugs">0</span></div>
       <div class="stat wide"><span class="k">Lines of code (est.)</span><span class="v" id="sLines">0</span></div>
     </div>
+    <h3>Time machine <span id="tmYear" class="tm-year"></span></h3>
+    <div class="tm-now">
+      <div><span class="k">This month</span><span class="v" id="sMonth">0</span><span class="s" id="sMonthName">—</span></div>
+      <div><span class="k">This year</span><span class="v" id="sYear">0</span><span class="s" id="sYearName">—</span></div>
+    </div>
+    <div class="months" id="monthBars" aria-label="Commits per month"></div>
+    <div class="years" id="yearPills"></div>
     <h3>Top citizens</h3>
     <ol class="leaders" id="leaders"></ol>
     <h3>Biggest districts</h3>
@@ -77,6 +84,7 @@
       <div><i class="lg fire"></i>Fire = bug-fix commit</div>
       <div><i class="lg person"></i>Person = contributor</div>
       <div><i class="lg crane"></i>Sparkles = new file or bug fixed</div>
+      <div><i class="lg wrap"></i>Pink card = Year in Review</div>
     </div>
   </aside>
 

@@ -25,6 +25,14 @@ Every codebase has a story. The first lonely commit. The week the team doubled. 
 
 ![Screenshot of a fully grown city with stats and a live commit feed](docs/screenshot.png)
 
+<div align="center">
+
+![Year in Review card popping up as the city enters a new year](docs/year-in-review.png)
+
+<sub>Every year ends with a pink, Wrapped-style recap card.</sub>
+
+</div>
+
 ## ✨ Features
 
 | | |
@@ -33,6 +41,9 @@ Every codebase has a story. The first lonely commit. The week the team doubled. 
 | 🗺️ **Folders become districts** | Top-level folders (and `packages/*`, `src/*`, `apps/*` in monorepos) become colour-coded neighbourhoods with roads in between. |
 | 🔥 **Bug fixes start fires** | Commits mentioning `fix`, `bug`, `crash`, `hotfix`, `regression`, `leak` and friends set the touched buildings ablaze. When the fire is out, the building sparkles. |
 | 🚶 **Contributors walk the streets** | Each author is a little citizen who walks to the building they just changed, with a light beam marking the commit. |
+| 🗓️ **Months & years** | A *Time machine* panel shows commits this month and this year, a pink commits-per-month chart that fills in as the year goes on, and clickable year pills that jump straight to any year. |
+| 💝 **Year in Review** | Every time the city rolls into a new year, playback pauses for a Wrapped-style pink recap: commits, new buildings, citizens, fires put out, a month-by-month chart, the top citizen, the busiest month and the fastest-growing district. |
+| 🎂 **Repo birthdays** | On every anniversary of the first commit, the city throws a party with a birthday banner and a confetti burst. |
 | ⏯️ **Full playback control** | Play, pause, restart, step commit by commit, scrub a timeline that shows activity and bug hotspots, and pick ½× to 8× speed. |
 | 📊 **Live stats** | Date, commits, buildings, citizens, fires put out, estimated lines of code, a contributor leaderboard and the biggest districts, all updating in real time. |
 | 📰 **Live commit feed** | Scrolling feed of commit messages with links back to GitHub. |

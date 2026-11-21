@@ -195,6 +195,41 @@ body.recording .btn.rec .dot { animation: pulse 1.2s infinite; }
 .leaders .barline { grid-column: 2 / 4; height: 3px; border-radius: 3px; background: rgba(255,79,168,.1); overflow: hidden; margin-top: -3px; }
 .leaders .barline i { display: block; height: 100%; border-radius: 3px; transition: width .4s ease; }
 
+/* ---------- time machine (months & years) ---------- */
+.tm-year { color: var(--accent); letter-spacing: .04em; margin-left: 4px; }
+.tm-now { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.tm-now > div {
+  background: linear-gradient(135deg, #ffe3f1, #f6e6ff);
+  border: 1px solid rgba(255, 79, 168, .18);
+  border-radius: 12px; padding: 8px 10px; display: flex; flex-direction: column;
+}
+.tm-now .k { font-size: 11px; color: var(--muted); }
+.tm-now .v { font: 700 20px var(--mono); color: #ff2e93; }
+.tm-now > div:nth-child(2) .v { color: #c247e8; }
+.tm-now .s { font-size: 11px; color: var(--muted); }
+.months { display: grid; grid-template-columns: repeat(12, 1fr); gap: 3px; align-items: end; height: 70px; margin-top: 10px; }
+.months .m { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 3px; position: relative; }
+.months .m i {
+  display: block; width: 100%; min-height: 2px; border-radius: 4px 4px 2px 2px;
+  background: linear-gradient(180deg, #ffb3d9, #ff85c2); transition: height .35s ease;
+}
+.months .m.now i { background: linear-gradient(180deg, #ff5fae, #ff2e93); box-shadow: 0 0 10px rgba(255, 46, 147, .45); }
+.months .m.future i { background: rgba(255, 79, 168, .1); }
+.months .m b { font: 600 9px Inter, sans-serif; color: var(--muted); }
+.months .m.now b { color: #ff2e93; }
+.months .m em { position: absolute; top: -2px; font: 700 9px var(--mono); color: #ff2e93; font-style: normal; }
+.years { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+.years button {
+  border: 1px solid rgba(255, 79, 168, .25); background: #fff; color: var(--text);
+  border-radius: 999px; padding: 3px 9px; font: 600 11px Inter, sans-serif; cursor: pointer;
+}
+.years button span { font-family: var(--mono); color: var(--muted); margin-left: 4px; }
+.years button.now { background: linear-gradient(135deg, #ff2e93, #ff6fb7); color: #fff; border-color: transparent; }
+.years button.now span { color: #ffe3f1; }
+.years button.future { opacity: .45; }
+.years button:hover { border-color: #ff2e93; }
+.lg.wrap { background: linear-gradient(135deg, #ff5fae, #c86bff); border-radius: 3px; }
+
 /* ---------- feed ---------- */
 #feed { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; min-height: 120px; }
 #feed li {
@@ -324,7 +359,7 @@ dialog::backdrop { background: rgba(255, 200, 228, .5); backdrop-filter: blur(3p
     top: auto; bottom: 124px; left: 8px; right: 8px; width: auto; max-height: none;
     padding: 10px 12px;
   }
-  .stats h3, .leaders, .districts, .repo-title #repoMeta { display: none; }
+  .stats h3, .leaders, .districts, .repo-title #repoMeta, .tm-now, .months, .years { display: none; }
   .stats .date { font-size: 18px; margin: 4px 0 8px; }
   .stat-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
   .stat.wide { display: none; }
