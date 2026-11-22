@@ -29,7 +29,7 @@ Every codebase has a story. The first lonely commit. The week the team doubled. 
 
 ![Year in Review card popping up as the city enters a new year](docs/year-in-review.png)
 
-<sub>Every year ends with a pink, Wrapped-style recap card.</sub>
+<sub>Every year ends with a Wrapped-style recap card.</sub>
 
 ![Developer profile card shown when you search for a username](docs/profile.png)
 
@@ -43,7 +43,7 @@ Every codebase has a story. The first lonely commit. The week the team doubled. 
 |---|---|
 | 🏗️ **Files become buildings** | Every file gets its own lot. Height grows with lines of code (or switch to *churn* to see the most edited files tower over the rest). |
 | 🗺️ **Folders become districts** | Top-level folders (and `packages/*`, `src/*`, `apps/*` in monorepos) become colour-coded neighbourhoods with roads in between. |
-| 🔥 **Bug fixes start fires** | Commits mentioning `fix`, `bug`, `crash`, `hotfix`, `regression`, `leak` and friends set the touched buildings ablaze. When the fire is out, the building sparkles. |
+| 🔥 **Bug fixes start fires** | Commits mentioning `fix`, `bug`, `crash`, `hotfix`, `regression`, `leak` and friends set the touched buildings ablaze and raise the heat level. When the fire is out, the building sparkles. |
 | 🚶 **Contributors walk the streets** | Each author is a little citizen who walks to the building they just changed, with a light beam marking the commit. |
 | 👤 **Search by username** | Type just a username (like `gaearon` or `@sindresorhus`) to open a pink developer card. It shows the avatar, followers, total stars and forks, top languages, repos created per year, the last 14 days of activity, recent events and fun badges like *Superstar* or *Polyglot*. Tap any of their top repos to build its city. |
 | 🗓️ **Months & years** | A *Time machine* panel shows commits this month and this year, a pink commits-per-month chart that fills in as the year goes on, and clickable year pills that jump straight to any year. |
@@ -56,7 +56,8 @@ Every codebase has a story. The first lonely commit. The week the team doubled. 
 | 🎥 **Cinema mode** | Press `C` to hide the UI for clean screen recordings, with stats drawn right onto the scene. |
 | 📸 **Screenshots & share links** | Save a PNG, or copy a link like `?repo=vuejs/core` (or `?user=gaearon` for a profile) that opens straight into it. |
 | ⚡ **Works instantly, no token** | A built-in demo city plays with zero API calls. Real repos use the public GitHub API, and an optional token unlocks thousands of commits. |
-| 💖 **Pink, light & sparkly** | A bright pink-and-white daytime city with hot pink and bubblegum skyscrapers and twinkling sparkles in the sky. Sparkles burst whenever a new file is built or a bug fire is put out. Prefer a moody look? Switch to *Dreamy night* in Settings. |
+| 🌴 **Neon sunset look** | A striped sun sinking into the ocean, palm trees swaying at the edges, neon skyscrapers with glowing windows, palms on empty lots and bold headline type. Prefer something softer? Switch to *Barbie pink* or *Dreamy night* in Settings. |
+| ⭐ **Heat level** | Up to five wanted-style stars that rise when the last 20 commits are full of bug fixes and cool down when things are calm. |
 | 📱 **Responsive** | Drag to pan, scroll or pinch to zoom, works on phones too. |
 
 ## 🚀 Quick start
@@ -116,7 +117,7 @@ Results are cached in `localStorage`, so reopening the same repo is instant. You
 
 ```
 index.html        page layout and controls
-css/style.css     light pink glass UI
+css/style.css     neon glass UI and themes
 js/github.js      GitHub API loader (pagination, rate limits)
 js/demo.js        seeded demo project that works offline
 js/profile.js     username search and developer profile card
@@ -156,7 +157,7 @@ The fastest way to a post people stop scrolling for:
 >
 > #opensource #javascript #webdev #dataviz #github
 
-**Tips:** Your own side project makes the most personal post. Cinema mode (`C`) plus 2× speed gives the cleanest recording. For square videos, resize the browser window to a square before recording.
+**Tips:** Your own side project makes the most personal post. Cinema mode (`C`) plus 2× speed gives the cleanest recording, and the neon sunset theme looks especially good on video. For square videos, resize the browser window to a square before recording.
 
 ## 🛣️ Ideas for the future
 

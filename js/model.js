@@ -8,10 +8,15 @@ window.CTM = window.CTM || {};
 
 CTM.BUG_RE = /\b(fix(e[sd]|ing)?|bug(s|fix)?|crash(es|ed|ing)?|hotfix|regression|broken|segfault|leak(s|ing)?|oops|panic)\b/i;
 
-CTM.PALETTE = [
-  '#ff3d9a', '#ff85c2', '#c86bff', '#ffb3d9', '#ff5fae', '#e38bff', '#7fd0ff', '#ff9ccd',
-  '#b45cff', '#ff70b8', '#8ee6c8', '#ffc0e0', '#d98cff', '#ff4fa8', '#a6dcff', '#ffd23f',
-];
+CTM.THEME_PALETTES = {
+  sunset: ['#ff3e9d', '#00e0d3', '#ff8a3d', '#9b5cff', '#ffd23f', '#2ec4ff', '#ff5470', '#00f5a0',
+    '#ff6ad5', '#3df2ff', '#ffb13d', '#b07cff', '#ff4060', '#5cffc8', '#ffe066', '#4d9dff'],
+  day: ['#ff3d9a', '#ff85c2', '#c86bff', '#ffb3d9', '#ff5fae', '#e38bff', '#7fd0ff', '#ff9ccd',
+    '#b45cff', '#ff70b8', '#8ee6c8', '#ffc0e0', '#d98cff', '#ff4fa8', '#a6dcff', '#ffd23f'],
+  night: ['#ff9fcf', '#a996ff', '#86ebc4', '#8fcbff', '#ffe98a', '#f0a3ff', '#9ff0ff', '#c6f59a',
+    '#ffb8dc', '#b8b0ff', '#8ff7d6', '#ffc4ee', '#a9dcff', '#ddb3ff', '#fff3a8', '#a8f5c0'],
+};
+CTM.PALETTE = CTM.THEME_PALETTES.sunset;
 CTM.PEOPLE_COLORS = [
   '#ff2e93', '#a63dff', '#00b386', '#2f8fff', '#ff7a00', '#e0249a', '#7b4dff', '#0aa5c2',
   '#ff4f7a', '#c23bd4', '#3a9d4f', '#d4569c', '#5a6bff', '#ff5ec4', '#8a2be2', '#e8558f',

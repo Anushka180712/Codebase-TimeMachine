@@ -29,6 +29,7 @@ window.CTM = window.CTM || {};
 
   const SKY = {
     night: { top: '#1f1846', mid: '#4b3f8f', bottom: '#e59ac8', ground: [62, 52, 118], road: [44, 36, 90], plotA: 0.16, light: 0.98, tree: [140, 230, 190] },
+    sunset: { top: '#160a35', mid: '#ff3d7f', bottom: '#ff9a3c', ground: [40, 22, 66], road: [22, 12, 40], plotA: 0.2, light: 0.95, tree: [24, 10, 40] },
     day: { top: '#ffc4e1', mid: '#ffe3f1', bottom: '#fff8fc', ground: [255, 236, 246], road: [255, 196, 224], plotA: 0.28, light: 1.0, tree: [70, 205, 150] },
   };
 
@@ -37,7 +38,7 @@ window.CTM = window.CTM || {};
       this.canvas = canvas;
       this.ctx = canvas.getContext('2d');
       this.model = null;
-      this.sky = 'day';
+      this.sky = 'sunset';
       this.heightMode = 'lines';
       this.cam = { x: 0, y: 0, zoom: 1 };
       this.camTarget = { x: 0, y: 0, zoom: 1 };
@@ -79,9 +80,22 @@ window.CTM = window.CTM || {};
         i, name: a.name, color: hexToRgb(a.color), colorStr: a.color,
         x: 0, y: 0, tx: 0, ty: 0, alpha: 0, active: -1e9, lastSeen: -1e9, phase: hash(i, 9, 9) * 6.28, wanderAt: 0, spawned: false,
       }));
-      this.districtColors = model.districts.map((d) => hexToRgb(d.color));
+      this.applyPalette();
       this.autoCam = true;
       this.updateAutoCam(true);
+    }
+
+    applyPalette() {
+      if (!this.model) return;
+      const pal = CTM.THEME_PALETTES[this.sky] || CTM.PALETTE;
+      this.model.districts.forEach((d, i) => { d.color = pal[i % pal.length]; });
+      this.districtColors = this.model.districts.map((d) => hexToRgb(d.color));
+    }
+
+    setTheme(sky) {
+      this.sky = SKY[sky] ? sky : 'sunset';
+      this.sunCache = null;
+      this.applyPalette();
     }
 
     targetHeight(id) {
@@ -411,6 +425,7 @@ window.CTM = window.CTM || {};
       g.addColorStop(1, sky.bottom);
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, this.w, this.h);
+      if (this.sky === 'sunset') { this.drawSunset(ctx); return; }
       if (this.sky === 'day') {
         const sg = ctx.createRadialGradient(this.w * 0.8, this.h * 0.15, 0, this.w * 0.8, this.h * 0.15, 320);
         sg.addColorStop(0, 'rgba(255,255,255,0.85)');
@@ -451,6 +466,96 @@ window.CTM = window.CTM || {};
       }
     }
 
+    /* Neon sunset: striped sun on the horizon, ocean, palm silhouettes. */
+    drawSunset(ctx) {
+      const W = this.w, H = this.h, hz = H * 0.6;
+      const g = ctx.createLinearGradient(0, 0, 0, hz);
+      g.addColorStop(0, '#140833');
+      g.addColorStop(0.38, '#4a137a');
+      g.addColorStop(0.7, '#ff3d7f');
+      g.addColorStop(1, '#ffa047');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, hz);
+      for (const st of this.stars) {
+        if (st.y > 0.32) continue;
+        ctx.fillStyle = `rgba(255,230,255,${0.25 + 0.35 * Math.sin(this.time * 1.5 + st.p)})`;
+        ctx.fillRect(st.x * W, st.y * H, st.r, st.r);
+      }
+      // sun (cached offscreen so the stripes can be cut out)
+      const R = Math.min(W, H) * 0.2;
+      if (!this.sunCache || this.sunCache.R !== R) {
+        const c = document.createElement('canvas');
+        c.width = c.height = Math.ceil(R * 2 + 4);
+        const x = c.getContext('2d');
+        const sg = x.createLinearGradient(0, 0, 0, R * 2);
+        sg.addColorStop(0, '#fff27a');
+        sg.addColorStop(0.5, '#ffb03d');
+        sg.addColorStop(1, '#ff3d7f');
+        x.fillStyle = sg;
+        x.beginPath(); x.arc(R + 2, R + 2, R, 0, Math.PI * 2); x.fill();
+        x.globalCompositeOperation = 'destination-out';
+        for (let k = 0; k < 7; k++) {
+          const yy = R + 2 + R * 0.12 + k * R * 0.13;
+          x.fillRect(0, yy, c.width, 2 + k * 1.6);
+        }
+        this.sunCache = { c, R };
+      }
+      ctx.save();
+      ctx.shadowColor = 'rgba(255,120,80,0.8)';
+      ctx.shadowBlur = 60;
+      ctx.drawImage(this.sunCache.c, W * 0.5 - R - 2, hz - R * 1.35);
+      ctx.restore();
+      ctx.save();
+      ctx.beginPath(); ctx.rect(0, 0, W, hz); ctx.clip();
+      ctx.restore();
+      // ocean
+      const og = ctx.createLinearGradient(0, hz, 0, H);
+      og.addColorStop(0, '#ff7a59');
+      og.addColorStop(0.08, '#0b5d7a');
+      og.addColorStop(1, '#041a2e');
+      ctx.fillStyle = og;
+      ctx.fillRect(0, hz, W, H - hz);
+      // sun reflection shimmer
+      for (let k = 0; k < 18; k++) {
+        const yy = hz + 6 + k * k * 1.4;
+        if (yy > H) break;
+        const ww = R * (1.4 - k * 0.05) * (0.7 + 0.3 * Math.sin(this.time * 2 + k));
+        ctx.fillStyle = `rgba(255,${170 - k * 4},${90 + k * 3},${0.5 - k * 0.025})`;
+        ctx.fillRect(W * 0.5 - ww / 2 + Math.sin(this.time + k) * 6, yy, ww, 2);
+      }
+      // palm silhouettes framing the scene
+      const sc = Math.max(0.6, Math.min(1.4, H / 800));
+      this.drawPalm(ctx, W * 0.03, H, 330 * sc, 0.32, sc, '#12061f');
+      this.drawPalm(ctx, W * 0.1, H, 230 * sc, -0.12, sc * 0.8, '#1a0a2c');
+      this.drawPalm(ctx, W * 0.97, H, 360 * sc, -0.35, sc, '#12061f');
+      this.drawPalm(ctx, W * 0.89, H, 240 * sc, 0.15, sc * 0.8, '#1a0a2c');
+    }
+
+    drawPalm(ctx, x, y, h, lean, s, col) {
+      const tx = x + lean * h, ty = y - h;
+      const sway = Math.sin(this.time * 0.8 + x) * 4 * s;
+      ctx.strokeStyle = col;
+      ctx.lineCap = 'round';
+      ctx.lineWidth = 9 * s;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.quadraticCurveTo(x + lean * h * 0.2, y - h * 0.55, tx + sway, ty);
+      ctx.stroke();
+      ctx.fillStyle = col;
+      for (let k = 0; k < 8; k++) {
+        const a = -Math.PI / 2 + (k - 3.5) * 0.42 + Math.sin(this.time * 1.1 + k + x) * 0.04;
+        const len = (70 + (k % 3) * 18) * s;
+        const ex = tx + sway + Math.cos(a) * len * 1.25, ey = ty + Math.sin(a) * len * 0.5 + len * 0.55;
+        const mx = tx + sway + Math.cos(a) * len * 0.7, my = ty + Math.sin(a) * len * 0.9;
+        ctx.beginPath();
+        ctx.moveTo(tx + sway, ty);
+        ctx.quadraticCurveTo(mx - 8 * s, my - 10 * s, ex, ey);
+        ctx.quadraticCurveTo(mx + 6 * s, my + 6 * s, tx + sway, ty + 4 * s);
+        ctx.fill();
+      }
+      ctx.beginPath(); ctx.arc(tx + sway, ty + 4 * s, 7 * s, 0, Math.PI * 2); ctx.fill();
+    }
+
     drawSkyOnly() {
       const ctx = this.ctx;
       ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
@@ -470,7 +575,8 @@ window.CTM = window.CTM || {};
       const m = this.model;
       const st = m.state;
       const sky = SKY[this.sky];
-      const night = this.sky === 'night';
+      const night = this.sky !== 'day';
+      const sunset = this.sky === 'sunset';
       const z = this.cam.zoom;
 
       ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
@@ -489,14 +595,14 @@ window.CTM = window.CTM || {};
         const depth = 14;
         ctx.beginPath();
         ctx.moveTo(l[0], l[1]); ctx.lineTo(b[0], b[1]); ctx.lineTo(b[0], b[1] + depth); ctx.lineTo(l[0], l[1] + depth); ctx.closePath();
-        ctx.fillStyle = night ? rgb(shade(sky.road, 0.7)) : '#ff9fcd'; ctx.fill();
+        ctx.fillStyle = sunset ? '#ff3e9d' : night ? rgb(shade(sky.road, 0.7)) : '#ff9fcd'; ctx.fill();
         ctx.beginPath();
         ctx.moveTo(b[0], b[1]); ctx.lineTo(r[0], r[1]); ctx.lineTo(r[0], r[1] + depth); ctx.lineTo(b[0], b[1] + depth); ctx.closePath();
-        ctx.fillStyle = night ? rgb(shade(sky.road, 0.5)) : '#ff6fb3'; ctx.fill();
+        ctx.fillStyle = sunset ? '#00b8ad' : night ? rgb(shade(sky.road, 0.5)) : '#ff6fb3'; ctx.fill();
       }
 
       // road markings between blocks
-      ctx.strokeStyle = night ? 'rgba(255,220,245,0.25)' : 'rgba(255,255,255,0.95)';
+      ctx.strokeStyle = sunset ? 'rgba(255,214,90,0.35)' : night ? 'rgba(255,220,245,0.25)' : 'rgba(255,255,255,0.95)';
       ctx.lineWidth = 1.2 / Math.max(z, 0.5);
       ctx.setLineDash([6, 8]);
       ctx.beginPath();
@@ -524,7 +630,8 @@ window.CTM = window.CTM || {};
         const used = d.files.length;
         for (let k = used; k < d.cols * d.rows; k++) {
           const gx = d.x + (k % d.cols), gy = d.y + Math.floor(k / d.cols);
-          this.drawTree(ctx, gx + 0.5, gy + 0.5, sky.tree, d.index * 31 + k);
+          if (sunset) this.drawLotPalm(ctx, gx + 0.5, gy + 0.5, d.index * 31 + k);
+          else this.drawTree(ctx, gx + 0.5, gy + 0.5, sky.tree, d.index * 31 + k);
         }
       }
 
@@ -575,7 +682,7 @@ window.CTM = window.CTM || {};
       for (const p of this.particles) {
         const t = p.life / p.max;
         if (p.kind === 'flame') {
-          const c = night ? (t < 0.3 ? [255, 246, 200] : t < 0.6 ? [255, 190, 150] : [255, 120, 175])
+          const c = sunset ? (t < 0.3 ? [255, 240, 150] : t < 0.6 ? [255, 140, 40] : [255, 60, 90]) : night ? (t < 0.3 ? [255, 246, 200] : t < 0.6 ? [255, 190, 150] : [255, 120, 175])
             : (t < 0.3 ? [255, 214, 60] : t < 0.6 ? [255, 120, 40] : [255, 46, 147]);
           ctx.fillStyle = rgb(c, 0.85 * (1 - t));
           ctx.beginPath(); ctx.arc(p.x, p.y, p.size * (1 - t * 0.6), 0, Math.PI * 2); ctx.fill();
@@ -593,7 +700,7 @@ window.CTM = window.CTM || {};
         const [x, y] = this.lotTop(id);
         const r = 46 + Math.sin(this.time * 20 + id) * 4;
         const g = ctx.createRadialGradient(x, y, 0, x, y, r);
-        g.addColorStop(0, night ? 'rgba(255,170,190,0.55)' : 'rgba(255,150,60,0.35)');
+        g.addColorStop(0, sunset ? 'rgba(255,130,40,0.55)' : night ? 'rgba(255,170,190,0.55)' : 'rgba(255,150,60,0.35)');
         g.addColorStop(1, night ? 'rgba(255,140,200,0)' : 'rgba(255,46,147,0)');
         ctx.fillStyle = g;
         ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
@@ -612,7 +719,7 @@ window.CTM = window.CTM || {};
           const [x, y] = iso(d.x + d.cols / 2, d.y + d.rows + 0.9);
           const label = d.name;
           const w = ctx.measureText(label).width + 12 / z * 0.8;
-          ctx.fillStyle = night ? 'rgba(34,24,72,0.82)' : 'rgba(255,255,255,0.85)';
+          ctx.fillStyle = sunset ? 'rgba(14,6,30,0.85)' : night ? 'rgba(34,24,72,0.82)' : 'rgba(255,255,255,0.85)';
           const ph = fs * 1.5;
           this.roundRect(ctx, x - w / 2, y - ph / 2, w, ph, ph / 2);
           ctx.fill();
@@ -643,12 +750,21 @@ window.CTM = window.CTM || {};
       // vignette
       const vg = ctx.createRadialGradient(this.w / 2, this.h / 2, Math.min(this.w, this.h) * 0.35, this.w / 2, this.h / 2, Math.max(this.w, this.h) * 0.75);
       vg.addColorStop(0, 'rgba(0,0,0,0)');
-      vg.addColorStop(1, night ? 'rgba(20,12,50,0.45)' : 'rgba(255,120,190,0.12)');
+      vg.addColorStop(1, sunset ? 'rgba(20,4,40,0.4)' : night ? 'rgba(20,12,50,0.45)' : 'rgba(255,120,190,0.12)');
       ctx.fillStyle = vg;
       ctx.fillRect(0, 0, this.w, this.h);
       if (this.hud && this.hudInfo) this.drawHud(ctx);
       this.drawConfetti(ctx);
       if (this.cards.length) this.drawCard(ctx, this.cards[0]);
+    }
+
+    drawLotPalm(ctx, gx, gy, seed) {
+      const [x, y] = iso(gx, gy);
+      const s = 0.5 + hash(seed, 3, 1) * 0.25;
+      const ox = (hash(seed, 1, 1) - 0.5) * 10, oy = (hash(seed, 2, 1) - 0.5) * 4;
+      ctx.fillStyle = 'rgba(0,0,0,0.25)';
+      ctx.beginPath(); ctx.ellipse(x + ox, y + oy + 1, 7 * s, 3 * s, 0, 0, Math.PI * 2); ctx.fill();
+      this.drawPalm(ctx, x + ox, y + oy, 46 * s, (hash(seed, 4, 1) - 0.5) * 0.5, s * 0.32, '#1fd1a5');
     }
 
     drawTree(ctx, gx, gy, col, seed) {
@@ -715,7 +831,8 @@ window.CTM = window.CTM || {};
         ctx.lineWidth = 2.6;
         ctx.lineCap = 'butt';
         const glow = ['rgba(255,252,235,0.95)', 'rgba(255,225,245,0.95)', 'rgba(225,245,255,0.95)'];
-        const lit = night ? glow[id % 3] : 'rgba(255,255,255,0.92)';
+        const neonWin = ['rgba(255,214,120,0.95)', 'rgba(120,255,240,0.95)', 'rgba(255,150,210,0.95)'];
+        const lit = this.sky === 'sunset' ? neonWin[id % 3] : night ? glow[id % 3] : 'rgba(255,255,255,0.92)';
         const dim = night ? 'rgba(60,45,110,0.45)' : 'rgba(120,20,80,0.18)';
         for (let r = 0; r < rows; r++) {
           const yOff = 8 + r * 9;
@@ -736,7 +853,7 @@ window.CTM = window.CTM || {};
 
       // neon roof outline
       if (night) {
-        ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+        ctx.strokeStyle = this.sky === 'sunset' ? rgb(shade(base, 1.3), 0.95) : 'rgba(255,255,255,0.55)';
         ctx.lineWidth = 1.4 / Math.max(z, 0.5);
         ctx.beginPath();
         ctx.moveTo(A[0], A[1] - h); ctx.lineTo(B[0], B[1] - h); ctx.lineTo(C[0], C[1] - h); ctx.lineTo(D[0], D[1] - h); ctx.closePath();
@@ -805,7 +922,7 @@ window.CTM = window.CTM || {};
         const y = p.y - 26 * s - bob;
         const a = Math.min(1, (3.5 - (this.time - p.lastSeen)) * 1.5);
         ctx.globalAlpha = p.alpha * a;
-        ctx.fillStyle = this.sky === 'night' ? 'rgba(34,24,72,0.88)' : 'rgba(255,255,255,0.95)';
+        ctx.fillStyle = this.sky === 'sunset' ? 'rgba(14,6,30,0.88)' : this.sky === 'night' ? 'rgba(34,24,72,0.88)' : 'rgba(255,255,255,0.95)';
         this.roundRect(ctx, p.x - w / 2, y - fs * 0.8, w, fs * 1.6, fs * 0.8);
         ctx.fill();
         ctx.fillStyle = p.colorStr;
@@ -891,28 +1008,29 @@ window.CTM = window.CTM || {};
         ctx.scale(appear, appear);
         ctx.shadowColor = 'rgba(255,46,147,0.35)';
         ctx.shadowBlur = 30;
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = this.sky === 'sunset' ? '#140833' : '#ffffff';
         this.roundRect(ctx, -tw / 2, -ph / 2, tw, ph, ph / 2);
         ctx.fill();
         ctx.shadowBlur = 0;
         ctx.lineWidth = 3;
         const gb = ctx.createLinearGradient(-tw / 2, 0, tw / 2, 0);
-        gb.addColorStop(0, '#ff2e93'); gb.addColorStop(1, '#c86bff');
+        if (this.sky === 'sunset') { gb.addColorStop(0, '#ff3e9d'); gb.addColorStop(0.5, '#ff8a3d'); gb.addColorStop(1, '#2ee6d6'); }
+        else { gb.addColorStop(0, '#ff2e93'); gb.addColorStop(1, '#c86bff'); }
         ctx.strokeStyle = gb;
         ctx.stroke();
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillStyle = '#ff2e93';
+        ctx.fillStyle = this.sky === 'sunset' ? '#ffd23f' : '#ff2e93';
         ctx.fillText('🎂 ' + c.label + ' 🎉', 0, -10 * s);
         ctx.font = `600 ${12 * s}px Inter, sans-serif`;
-        ctx.fillStyle = '#a35f86';
+        ctx.fillStyle = this.sky === 'sunset' ? '#7ff5ea' : '#a35f86';
         ctx.fillText(c.sub, 0, 16 * s);
         ctx.restore();
         return;
       }
 
       // ---- Year in Review card ----
-      ctx.fillStyle = `rgba(255,240,248,${0.45 * fade})`;
+      ctx.fillStyle = this.sky === 'sunset' ? `rgba(16,6,34,${0.45 * fade})` : `rgba(255,240,248,${0.45 * fade})`;
       ctx.fillRect(0, 0, W, H);
       const s = Math.max(0.62, Math.min(1.15, Math.min(W / 640, H / 560)));
       const cw = 440 * s, ch = 430 * s;
@@ -923,9 +1041,11 @@ window.CTM = window.CTM || {};
       ctx.shadowColor = 'rgba(255,46,147,0.45)';
       ctx.shadowBlur = 50;
       const g = ctx.createLinearGradient(-cw / 2, -ch / 2, cw / 2, ch / 2);
-      g.addColorStop(0, '#ff7cc0');
-      g.addColorStop(0.5, '#ff2e93');
-      g.addColorStop(1, '#c86bff');
+      if (this.sky === 'sunset') {
+        g.addColorStop(0, '#ff3e9d'); g.addColorStop(0.55, '#ff8a3d'); g.addColorStop(1, '#7b2cff');
+      } else {
+        g.addColorStop(0, '#ff7cc0'); g.addColorStop(0.5, '#ff2e93'); g.addColorStop(1, '#c86bff');
+      }
       ctx.fillStyle = g;
       this.roundRect(ctx, -cw / 2, -ch / 2, cw, ch, 28 * s);
       ctx.fill();
@@ -948,11 +1068,11 @@ window.CTM = window.CTM || {};
       ctx.fillStyle = 'rgba(255,255,255,0.9)';
       ctx.font = `800 ${12 * s}px Inter, sans-serif`;
       ctx.fillText(c.partial ? '✨  YEAR IN REVIEW · SO FAR  ✨' : '✨  YEAR IN REVIEW  ✨', 0, y);
-      y += 66 * s;
+      y += (this.sky === 'sunset' ? 80 : 66) * s;
       ctx.fillStyle = '#ffffff';
-      ctx.font = `900 ${68 * s}px Inter, sans-serif`;
+      ctx.font = this.sky === 'sunset' ? `400 ${76 * s}px Anton, Impact, sans-serif` : `900 ${68 * s}px Inter, sans-serif`;
       ctx.fillText(String(c.year), 0, y);
-      y += 26 * s;
+      y += (this.sky === 'sunset' ? 22 : 26) * s;
       ctx.font = `600 ${13 * s}px "JetBrains Mono", monospace`;
       ctx.fillStyle = 'rgba(255,255,255,0.85)';
       ctx.fillText(c.repo, 0, y);
@@ -1024,26 +1144,30 @@ window.CTM = window.CTM || {};
       ctx.textBaseline = 'alphabetic';
       ctx.textAlign = 'left';
 
-      const day = this.sky !== 'night';
-      const shadeRGB = day ? '255,255,255' : '26,18,60';
+      const day = this.sky === 'day';
+      const sunsetHud = this.sky === 'sunset';
+      const display = sunsetHud ? 'Anton, Impact, "Arial Narrow", sans-serif' : 'Inter, sans-serif';
+      const shadeRGB = day ? '255,255,255' : sunsetHud ? '16,6,34' : '26,18,60';
       const g = ctx.createLinearGradient(0, 0, 0, 150 * scale);
       g.addColorStop(0, `rgba(${shadeRGB},${day ? 0.85 : 0.7})`);
       g.addColorStop(1, `rgba(${shadeRGB},0)`);
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, W, 150 * scale);
 
-      ctx.fillStyle = day ? '#ff2e93' : 'rgba(255,214,240,0.95)';
+      ctx.fillStyle = sunsetHud ? '#2ee6d6' : day ? '#ff2e93' : 'rgba(255,214,240,0.95)';
       ctx.font = `600 ${14 * scale}px "JetBrains Mono", monospace`;
       ctx.fillText(info.repo, pad, pad + 12 * scale);
       ctx.fillStyle = day ? '#4a1438' : '#ffffff';
-      ctx.font = `800 ${34 * scale}px Inter, sans-serif`;
-      ctx.fillText(info.date, pad, pad + 50 * scale);
+      ctx.font = sunsetHud ? `400 ${40 * scale}px ${display}` : `800 ${34 * scale}px Inter, sans-serif`;
+      if (sunsetHud) { ctx.shadowColor = '#ff3e9d'; ctx.shadowBlur = 18; }
+      ctx.fillText(sunsetHud ? info.date.toUpperCase() : info.date, pad, pad + 52 * scale);
+      ctx.shadowBlur = 0;
 
       const stats = [
-        ['COMMITS', info.commits, day ? '#ff2e93' : '#ffb3da'],
-        ['BUILDINGS', info.files, day ? '#c247e8' : '#a6d8ff'],
-        ['CITIZENS', info.people, day ? '#1fb886' : '#9ef0d0'],
-        ['FIRES PUT OUT', info.bugs, day ? '#ff8a00' : '#fff2a1'],
+        ['COMMITS', info.commits, sunsetHud ? '#ff4f9a' : day ? '#ff2e93' : '#ffb3da'],
+        ['BUILDINGS', info.files, sunsetHud ? '#2ee6d6' : day ? '#c247e8' : '#a6d8ff'],
+        ['CITIZENS', info.people, sunsetHud ? '#ffd23f' : day ? '#1fb886' : '#9ef0d0'],
+        ['FIRES PUT OUT', info.bugs, sunsetHud ? '#ff8a3d' : day ? '#ff8a00' : '#fff2a1'],
       ];
       let x = W - pad;
       ctx.textAlign = 'right';
@@ -1063,6 +1187,25 @@ window.CTM = window.CTM || {};
         x -= colW + 28 * scale;
       }
 
+      // heat level (wanted-style stars)
+      if (info.heat != null) {
+        ctx.textAlign = 'right';
+        const fs = 18 * scale;
+        ctx.font = `700 ${fs}px Inter, sans-serif`;
+        let sx = W - pad;
+        for (let k = 4; k >= 0; k--) {
+          const on = k < info.heat;
+          ctx.fillStyle = on ? '#ffd23f' : day ? 'rgba(163,95,134,0.35)' : 'rgba(255,255,255,0.28)';
+          if (on) { ctx.shadowColor = '#ff8a3d'; ctx.shadowBlur = 12; }
+          ctx.fillText('★', sx, pad + 72 * scale);
+          ctx.shadowBlur = 0;
+          sx -= fs * 1.15;
+        }
+        ctx.font = `700 ${10 * scale}px Inter, sans-serif`;
+        ctx.fillStyle = day ? 'rgba(163,95,134,0.9)' : 'rgba(255,255,255,0.7)';
+        ctx.fillText('HEAT', sx - 4 * scale, pad + 69 * scale);
+      }
+
       // bottom ticker
       const bg = ctx.createLinearGradient(0, H - 90 * scale, 0, H);
       bg.addColorStop(0, `rgba(${shadeRGB},0)`);
@@ -1077,7 +1220,7 @@ window.CTM = window.CTM || {};
         ctx.fillText(who, pad, H - pad - 4 * scale);
         const ww = ctx.measureText(who).width;
         ctx.font = `500 ${14 * scale}px Inter, sans-serif`;
-        ctx.fillStyle = info.lastBug ? (day ? '#ff6a00' : '#ffb27a') : (day ? '#6b2a55' : 'rgba(230,235,255,0.9)');
+        ctx.fillStyle = info.lastBug ? (day ? '#ff6a00' : '#ffb27a') : (day ? '#6b2a55' : 'rgba(255,240,250,0.92)');
         let msg = (info.lastBug ? '🔥 ' : '') + info.lastMsg;
         const maxW = W * 0.62 - ww;
         while (ctx.measureText(msg).width > maxW && msg.length > 4) msg = msg.slice(0, -2);
@@ -1086,16 +1229,18 @@ window.CTM = window.CTM || {};
       }
       ctx.textAlign = 'right';
       ctx.font = `700 ${13 * scale}px Inter, sans-serif`;
-      ctx.fillStyle = day ? '#ff2e93' : 'rgba(255,255,255,0.85)';
-      ctx.fillText('✨ Codebase Time Machine', W - pad, H - pad - 4 * scale);
+      ctx.fillStyle = sunsetHud ? '#ffd23f' : day ? '#ff2e93' : 'rgba(255,255,255,0.85)';
+      ctx.fillText(sunsetHud ? '🌴 Codebase Time Machine' : '✨ Codebase Time Machine', W - pad, H - pad - 4 * scale);
 
       // progress line
       ctx.fillStyle = day ? 'rgba(255,46,147,0.15)' : 'rgba(255,255,255,0.12)';
       ctx.fillRect(0, H - 4, W, 4);
       const pg = ctx.createLinearGradient(0, 0, W, 0);
-      pg.addColorStop(0, '#ff2e93');
-      pg.addColorStop(0.5, '#ff85c2');
-      pg.addColorStop(1, '#c86bff');
+      if (sunsetHud) {
+        pg.addColorStop(0, '#ff3e9d'); pg.addColorStop(0.5, '#ff8a3d'); pg.addColorStop(1, '#2ee6d6');
+      } else {
+        pg.addColorStop(0, '#ff2e93'); pg.addColorStop(0.5, '#ff85c2'); pg.addColorStop(1, '#c86bff');
+      }
       ctx.fillStyle = pg;
       ctx.fillRect(0, H - 4, W * info.progress, 4);
     }

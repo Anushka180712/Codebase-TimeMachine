@@ -11,10 +11,10 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect x='6' y='26' width='14' height='32' rx='2' fill='%23ff2e93'/><rect x='25' y='10' width='14' height='48' rx='2' fill='%23ff85c2'/><rect x='44' y='32' width='14' height='26' rx='2' fill='%23c86bff'/></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
-<body>
+<body class="theme-sunset">
   <canvas id="city"></canvas>
 
   <!-- Top bar -->
@@ -63,6 +63,7 @@
       <div class="stat"><span class="k">Citizens</span><span class="v" id="sPeople">0</span></div>
       <div class="stat fire"><span class="k">Fires put out</span><span class="v" id="sBugs">0</span></div>
       <div class="stat wide"><span class="k">Lines of code (est.)</span><span class="v" id="sLines">0</span></div>
+      <div class="stat wide heat" title="Bug fixes in the last 20 commits"><span class="k">Heat level</span><span class="v stars" id="sHeat" data-heat="0">★★★★★</span></div>
     </div>
     <h3>Time machine <span id="tmYear" class="tm-year"></span></h3>
     <div class="tm-now">
@@ -86,7 +87,8 @@
       <div><i class="lg fire"></i>Fire = bug-fix commit</div>
       <div><i class="lg person"></i>Person = contributor</div>
       <div><i class="lg crane"></i>Sparkles = new file or bug fixed</div>
-      <div><i class="lg wrap"></i>Pink card = Year in Review</div>
+      <div><i class="lg wrap"></i>Big card = Year in Review</div>
+      <div><i class="lg heat">★</i>Heat = recent bug fixes</div>
     </div>
   </aside>
 
@@ -179,10 +181,11 @@
       </label>
 
       <label class="field">
-        <span>Sky</span>
+        <span>Theme</span>
         <select id="skySelect">
-          <option value="day">Pink daylight</option>
-          <option value="night">Dreamy night</option>
+          <option value="sunset">🌴 Neon sunset</option>
+          <option value="day">💖 Barbie pink</option>
+          <option value="night">🌙 Dreamy night</option>
         </select>
       </label>
 

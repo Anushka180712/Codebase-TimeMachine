@@ -16,7 +16,7 @@
     mode: store.get('mode', 'first'),
     limit: store.get('limit', null),
     height: store.get('height', 'lines'),
-    sky: store.get('sky2', 'day'),
+    sky: ['sunset', 'day', 'night'].includes(store.get('theme', 'sunset')) ? store.get('theme', 'sunset') : 'sunset',
   };
   const defaultLimit = () => (settings.token ? 300 : 50);
 
@@ -103,7 +103,13 @@
     return pause;
   }
 
-  city.sky = settings.sky;
+  function applyTheme(t) {
+    city.setTheme(t);
+    document.body.classList.remove('theme-sunset', 'theme-day', 'theme-night');
+    document.body.classList.add('theme-' + city.sky);
+    if (app.model) { updateUI(true); }
+  }
+  applyTheme(settings.sky);
   city.heightMode = settings.height;
 
   /* ------------------------------------------------------------ helpers */
@@ -295,6 +301,12 @@
     }
     lastBugs = st.bugs;
     $('#sLines').textContent = fmtNum(Math.max(0, st.lines));
+    // heat level: bug fixes among the last 20 commits, shown as 0-5 wanted-style stars
+    let recentBugs = 0;
+    for (let k = Math.max(0, i - 19); k <= i; k++) if (m.steps[k] && m.steps[k].bug) recentBugs++;
+    const heat = i < 0 ? 0 : Math.min(5, Math.ceil(recentBugs / 2));
+    $('#sHeat').innerHTML = '<b>' + '★'.repeat(heat) + '</b>' + '★'.repeat(5 - heat);
+    $('#sHeat').dataset.heat = String(heat);
     $('#scrubber').value = String(Math.max(0, i));
     $('#tlPos').textContent = i < 0 ? '' : `#${i + 1} · ${fmtDate(s.date)}`;
 
@@ -323,6 +335,7 @@
       lastAuthor: last ? m.authors[last.author].name : '',
       lastColor: last ? m.authors[last.author].color : '#fff',
       lastBug: last ? last.bug : false,
+      heat: Number($('#sHeat').dataset.heat || 0),
       progress: m.steps.length > 1 ? Math.max(0, i) / (m.steps.length - 1) : 1,
     };
     updateTime(s, i);
@@ -607,16 +620,16 @@
     store.set('mode', settings.mode);
     store.set('limit', settings.limit);
     store.set('height', settings.height);
-    store.set('sky2', settings.sky);
+    store.set('theme', settings.sky);
     city.heightMode = settings.height;
-    city.sky = settings.sky;
+    applyTheme(settings.sky);
   }
   dlg.addEventListener('close', saveSettings);
   $('#limitInput').addEventListener('input', refreshLimitHint);
   $('#tokenInput').addEventListener('input', refreshLimitHint);
   $('#settingsBtn').addEventListener('click', openSettings);
   $('#heightSelect').addEventListener('change', () => { city.heightMode = $('#heightSelect').value; });
-  $('#skySelect').addEventListener('change', () => { city.sky = $('#skySelect').value; });
+  $('#skySelect').addEventListener('change', () => applyTheme($('#skySelect').value));
   $('#exportBtn').addEventListener('click', () => {
     if (!app.model) return;
     download(new Blob([JSON.stringify(app.model.dataset)], { type: 'application/json' }), `${slug()}-city.json`);
